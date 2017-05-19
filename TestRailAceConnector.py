@@ -54,7 +54,11 @@ def main():
     connector = TestrailAceConnector()
     aceUsername = connectorconfig.aceUsername
     acePassword = connectorconfig.acePassword
-    return connector.acePublicSettings(), connector.aceLogin(aceUsername, acePassword), connector.getFailedTests(), connector.getOpenTestRuns()
+    connector.acePublicSettings()
+    connector.aceLogin(aceUsername, acePassword)
+    connector.getFailedTests()
+    connector.getOpenTestRuns()
+    return "Works"
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
