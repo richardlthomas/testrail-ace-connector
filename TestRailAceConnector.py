@@ -6,8 +6,9 @@ sys.path.append('/Users/richard.thomas/testrail-api/python/2.x')
 from flask import Flask
 from testrail import *
 
+app = Flask(__name__)
+
 class TestrailAceConnector:
-    app = Flask(__name__)
     testrailClient = APIClient("https://mercurygateqa.testrail.net/")
     testrailClient.user = connectorconfig.testRailUsername
     testrailClient.password = connectorconfig.testRailPassword
