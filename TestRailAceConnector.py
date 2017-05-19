@@ -58,11 +58,7 @@ def main():
     connector.aceLogin(aceUsername, acePassword)
     connector.getFailedTests()
     connector.getOpenTestRuns()
-    return "Works"
-
-@app.route("/connect/<test_id>")
-def passID(testID):
-    return testID
+    return request.args.get('test_id', '')
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
