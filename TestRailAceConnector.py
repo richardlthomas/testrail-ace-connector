@@ -60,7 +60,7 @@ def main():
     connector.getOpenTestRuns()
     return "Works"
 
-@app.route("/<test_id>")
+@app.route("/connect/<test_id>")
 def passID(testID):
     return testID
 
