@@ -49,6 +49,10 @@ class TestrailAceConnector:
         print openRuns
         return openRuns
 
+    def testrailGetResults(self, test_id):
+        results = testrailClient.send_get('get_results/%s' % test_id)
+        return results
+
 @app.route("/")
 def main():
     connector = TestrailAceConnector()
@@ -58,7 +62,9 @@ def main():
     connector.aceLogin(aceUsername, acePassword)
     connector.getFailedTests()
     connector.getOpenTestRuns()
-    return request.args.get('test_id', '')
+    #return request.args.get('test_id', '')
+    test_id = request.args.get('test_id', '')
+    return connector.testrailGetResults(test_id)
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
