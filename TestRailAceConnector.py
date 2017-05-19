@@ -36,7 +36,7 @@ class TestrailAceConnector:
         summary = "DEFECT: %s" % result['comment'][:100]
         details = self.parseStepResults(result['custom_step_results'])
         projectId = '21900'
-        statusId = '010'
+        statusId = '81428'
         isDetailsPlainText = 'True'
         responseFormat = 'JSON'
         getTaskInReturn = 'True'
