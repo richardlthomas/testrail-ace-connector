@@ -51,7 +51,7 @@ class TestrailAceConnector:
 
     def testrailGetResults(self, test_id):
         results = self.testrailClient.send_get('get_results/%s' % test_id)
-        return results[0]
+        return str(results)
 
 @app.route("/")
 def main():
