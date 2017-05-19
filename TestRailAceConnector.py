@@ -4,7 +4,7 @@ import json
 import requests
 import connectorconfig
 sys.path.append('/Users/richard.thomas/testrail-api/python/2.x')
-from flask import Flask
+from flask import Flask, request
 from testrail import *
 
 app = Flask(__name__)
@@ -58,7 +58,7 @@ def main():
     connector.aceLogin(aceUsername, acePassword)
     connector.getFailedTests()
     connector.getOpenTestRuns()
-    return "Works"
+    return request.args.get("test_id")
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
