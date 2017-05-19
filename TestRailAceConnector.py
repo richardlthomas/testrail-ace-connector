@@ -4,7 +4,7 @@ import json
 import requests
 import connectorconfig
 sys.path.append('/Users/richard.thomas/testrail-api/python/2.x')
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from testrail import *
 
 app = Flask(__name__)
@@ -15,9 +15,8 @@ class TestrailAceConnector:
     testrailClient.password = connectorconfig.testRailPassword
     aceBaseUrl = "http://api.aceproject.com/"
     aceAccountID = "mercurygate"
-    test = testrailClient.send_get('get_test/47')
-    testJson = json.loads(json.dumps(test, indent=3))
-    #print testJson['title']
+    aceUsername = connectorconfig.aceUsername
+    acePassword = connectorconfig.acePassword
 
     def acePublicSettings(self, settingName="CUSTOM_PRODUCT_NAME"):
         acePublicSettingsGet = requests.get(self.aceBaseUrl + "?fct=getpublicsettings&accountId=" + self.aceAccountID + "&format=JSON")
@@ -32,6 +31,28 @@ class TestrailAceConnector:
         aceGuid = aceLoginJSON['GUID']
         #print aceGuid
         return aceGuid
+
+    def aceCreateTaskFromResult(self, result):
+        summary = "DEFECT: %s" % result['comment'][:100]
+        details = self.parseStepResults(result['custom_step_results'])
+        projectId = '21900'
+        statusId = '010'
+        isDetailsPlainText = 'True'
+        responseFormat = 'JSON'
+        getTaskInReturn = 'True'
+        guid = self.aceLogin(self.aceUsername, self.acePassword)
+        createTaskStr = self.aceBaseUrl + "?fct=createtask&guid=" + guid + "&projectid=" + projectId + "&summary=" + summary + "&details=" + details + "&statusid=" + statusId + "&isdetailsplaintext=" + isDetailsPlainText + "&gettaskinreturn=" + getTaskInReturn + "&responseformat=" + responseFormat
+        response = requests.get(createTaskStr)
+        return createTaskStr
+
+    def parseStepResults(self, stepResults):
+        parsedResult = ""
+        for result in stepResults:
+            if result['status_id'] == 5:
+                parsedResult += "Failed: %s" % result['content'] + "\n"
+                parsedResult += "Expected: %s" % result['expected'] + "\n"
+                parsedResult += "Actual: %s" % result['actual'] + "\n"
+        return parsedResult
 
     def getFailedTests(self):
         failures = self.testrailClient.send_get('get_tests/9&status_id=5')
@@ -51,20 +72,16 @@ class TestrailAceConnector:
 
     def testrailGetResults(self, test_id):
         results = self.testrailClient.send_get('get_results/%s' % test_id)
-        return str(results)
+        return results[0]
 
 @app.route("/")
 def main():
-    connector = TestrailAceConnector()
-    aceUsername = connectorconfig.aceUsername
-    acePassword = connectorconfig.acePassword
-    connector.acePublicSettings()
-    connector.aceLogin(aceUsername, acePassword)
-    connector.getFailedTests()
-    connector.getOpenTestRuns()
     #return request.args.get('test_id', '')
     test_id = request.args.get('test_id', '')
-    return connector.testrailGetResults(test_id)
+    connector = TestrailAceConnector()
+    testResult = connector.testrailGetResults(test_id)
+    stepResults = testResult['custom_step_results']
+    return str(connector.aceCreateTaskFromResult(testResult))
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
