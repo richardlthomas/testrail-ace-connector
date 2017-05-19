@@ -52,13 +52,9 @@ class TestrailAceConnector:
 @app.route("/")
 def main():
     connector = TestrailAceConnector()
-    connector.acePublicSettings()
     aceUsername = connectorconfig.aceUsername
     acePassword = connectorconfig.acePassword
-    connector.aceLogin(aceUsername, acePassword)
-    connector.getFailedTests()
-    connector.getOpenTestRuns()
-    return "This worked"
+    return connector.acePublicSettings(), connector.aceLogin(aceUsername, acePassword), connector.getFailedTests(), connector.getOpenTestRuns()
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
