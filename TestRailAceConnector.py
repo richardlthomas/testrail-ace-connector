@@ -50,13 +50,13 @@ class TestrailAceConnector:
 
 @app.route("/")
 def main():
-    connector = TestrailAceConnector()
-    connector.acePublicSettings()
-    aceUsername = connectorconfig.aceUsername
-    acePassword = connectorconfig.acePassword
-    connector.aceLogin(aceUsername, acePassword)
-    connector.getFailedTests()
-    connector.getOpenTestRuns()
+    #connector = TestrailAceConnector()
+    #onnector.acePublicSettings()
+    #aceUsername = connectorconfig.aceUsername
+    #acePassword = connectorconfig.acePassword
+    #connector.aceLogin(aceUsername, acePassword)
+    #connector.getFailedTests()
+    #connector.getOpenTestRuns()
     return "This worked"
 
 if __name__ =='__main__':main()
