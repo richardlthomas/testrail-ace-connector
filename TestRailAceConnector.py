@@ -17,12 +17,12 @@ class TestrailAceConnector:
     aceAccountID = "mercurygate"
     test = testrailClient.send_get('get_test/47')
     testJson = json.loads(json.dumps(test, indent=3))
-    print testJson['title']
+    #print testJson['title']
 
     def acePublicSettings(self, settingName="CUSTOM_PRODUCT_NAME"):
         acePublicSettingsGet = requests.get(self.aceBaseUrl + "?fct=getpublicsettings&accountId=" + self.aceAccountID + "&format=JSON")
         acePublicSettingsJSON = json.loads(acePublicSettingsGet.text)['results'][0]
-        print acePublicSettingsJSON[settingName]
+        #print acePublicSettingsJSON[settingName]
         return acePublicSettingsJSON[settingName]
 
     def aceLogin(self, username, password):
@@ -30,27 +30,27 @@ class TestrailAceConnector:
         aceLoginGet = requests.get(aceLoginRequestStr)
         aceLoginJSON = json.loads(aceLoginGet.text)['results'][0]
         aceGuid = aceLoginJSON['GUID']
-        print aceGuid
+        #print aceGuid
         return aceGuid
 
     def getFailedTests(self):
         failures = self.testrailClient.send_get('get_tests/9&status_id=5')
-        print failures
+        #print failures
         return failures
 
     def getOpenTestRuns(self):
         allRuns = self.testrailClient.send_get('get_runs/5')
         openRuns = []
-        print("Open test runs:")
+        #print("Open test runs:")
         for run in allRuns:
             run = json.loads(json.dumps(run))
             if run['is_completed'] == False:
                 openRuns.append(run)
-        print openRuns
+        #print openRuns
         return openRuns
 
     def testrailGetResults(self, test_id):
-        results = testrailClient.send_get('get_results/%s' % test_id)
+        results = self.testrailClient.send_get('get_results/%s' % test_id)
         return results
 
 @app.route("/")
