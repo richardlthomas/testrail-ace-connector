@@ -76,7 +76,7 @@ class TestrailAceConnector:
 
     def testrailGetResults(self, test_id):
         results = self.testrailClient.send_get('get_results/%s' % test_id)
-        return results[-1]
+        return results[0]
 
     def testrailGetUserName(self, user_id):
         user = self.testrailClient.send_get('get_user/%s' % user_id)
