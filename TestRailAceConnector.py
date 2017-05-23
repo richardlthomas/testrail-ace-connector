@@ -34,8 +34,9 @@ class TestrailAceConnector:
         return aceGuid
 
     def aceCreateTaskFromResult(self, result):
-        summary = "DEFECT: %s" % result['comment'][:100]
+        summary = "DEFECT: %s" % result['custom_summary'][:100]
         details = "Reported By: %s \n\n" % self.testrailGetUserName(result['created_by'])
+        details += "Comments: %s \n\n" % result['comment']
         details += self.parseStepResults(result['custom_step_results'])
         projectId = '21900'
         statusId = '81428'
