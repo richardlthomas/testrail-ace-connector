@@ -42,8 +42,8 @@ class TestrailAceConnector:
         getTaskInReturn = 'True'
         guid = self.aceLogin(self.aceUsername, self.acePassword)
         createTaskStr = self.aceBaseUrl + "?fct=createtask&guid=" + guid + "&projectid=" + projectId + "&summary=" + summary + "&details=" + details + "&statusid=" + statusId + "&isdetailsplaintext=" + isDetailsPlainText + "&gettaskinreturn=" + getTaskInReturn + "&format=" + responseFormat
-        response = requests.get(createTaskStr.text)
-        return response
+        response = requests.get(createTaskStr)
+        return response.text
 
     def parseStepResults(self, stepResults):
         parsedResult = ""
