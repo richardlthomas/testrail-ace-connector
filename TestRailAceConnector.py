@@ -4,7 +4,7 @@ import json
 import requests
 import connectorconfig
 sys.path.append('/Users/richard.thomas/testrail-api/python/2.x')
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
 from testrail import *
 
 app = Flask(__name__)
@@ -14,18 +14,19 @@ class TestrailAceConnector:
     testrailClient.user = connectorconfig.testRailUsername
     testrailClient.password = connectorconfig.testRailPassword
     aceBaseUrl = "http://api.aceproject.com/"
-    aceAccountID = "mercurygate"
+    aceAccountId = "mercurygate"
+    aceProjectId = '21900'
     aceUsername = connectorconfig.aceUsername
     acePassword = connectorconfig.acePassword
 
     def acePublicSettings(self, settingName="CUSTOM_PRODUCT_NAME"):
-        acePublicSettingsGet = requests.get(self.aceBaseUrl + "?fct=getpublicsettings&accountId=" + self.aceAccountID + "&format=JSON")
+        acePublicSettingsGet = requests.get(self.aceBaseUrl + "?fct=getpublicsettings&accountId=" + self.aceAccountId + "&format=JSON")
         acePublicSettingsJSON = json.loads(acePublicSettingsGet.text)['results'][0]
         #print acePublicSettingsJSON[settingName]
         return acePublicSettingsJSON[settingName]
 
     def aceLogin(self, username, password):
-        aceLoginRequestStr = self.aceBaseUrl + "?fct=login&accountId=" + self.aceAccountID + "&username=" + username + "&password=" + password + "&browserinfo=NULL&language=en-US&format=JSON"
+        aceLoginRequestStr = self.aceBaseUrl + "?fct=login&accountId=" + self.aceAccountId + "&username=" + username + "&password=" + password + "&browserinfo=NULL&language=en-US&format=JSON"
         aceLoginGet = requests.get(aceLoginRequestStr)
         aceLoginJSON = json.loads(aceLoginGet.text)['results'][0]
         aceGuid = aceLoginJSON['GUID']
@@ -34,24 +35,27 @@ class TestrailAceConnector:
 
     def aceCreateTaskFromResult(self, result):
         summary = "DEFECT: %s" % result['comment'][:100]
-        details = self.parseStepResults(result['custom_step_results'])
+        details = "Reported By: %s \n\n" % self.testrailGetUserName(result['created_by'])
+        details += self.parseStepResults(result['custom_step_results'])
         projectId = '21900'
         statusId = '81428'
         isDetailsPlainText = 'True'
         responseFormat = 'JSON'
         getTaskInReturn = 'True'
         guid = self.aceLogin(self.aceUsername, self.acePassword)
-        createTaskStr = self.aceBaseUrl + "?fct=createtask&guid=" + guid + "&projectid=" + projectId + "&summary=" + summary + "&details=" + details + "&statusid=" + statusId + "&isdetailsplaintext=" + isDetailsPlainText + "&gettaskinreturn=" + getTaskInReturn + "&format=" + responseFormat
+        createTaskStr = self.aceBaseUrl + "?fct=createtask&guid=" + guid + "&projectid=" + self.aceProjectId + "&summary=" + summary + "&details=" + details + "&statusid=" + statusId + "&isdetailsplaintext=" + isDetailsPlainText + "&gettaskinreturn=" + getTaskInReturn + "&format=" + responseFormat
         response = requests.get(createTaskStr)
-        return response.text
+        createTaskJSON = json.loads(response.text)['results'][0]
+        createTaskId = createTaskJSON['TASK_ID']
+        return createTaskId
 
     def parseStepResults(self, stepResults):
         parsedResult = ""
         for result in stepResults:
             if result['status_id'] == 5:
-                parsedResult += "Failed: %s" % result['content'] + "\n"
-                parsedResult += "Expected: %s" % result['expected'] + "\n"
-                parsedResult += "Actual: %s" % result['actual'] + "\n"
+                parsedResult += "Failed: %s" % result['content'] + "\n\n"
+                parsedResult += "Expected: %s" % result['expected'] + "\n\n"
+                parsedResult += "Actual: %s" % result['actual'] + "\n\n"
         return parsedResult
 
     def getFailedTests(self):
@@ -74,6 +78,11 @@ class TestrailAceConnector:
         results = self.testrailClient.send_get('get_results/%s' % test_id)
         return results[0]
 
+    def testrailGetUserName(self, user_id):
+        user = self.testrailClient.send_get('get_user/%s' % user_id)
+        name = user['name']
+        return name
+
 @app.route("/")
 def main():
     #return request.args.get('test_id', '')
@@ -81,7 +90,8 @@ def main():
     connector = TestrailAceConnector()
     testResult = connector.testrailGetResults(test_id)
     stepResults = testResult['custom_step_results']
-    return str(connector.aceCreateTaskFromResult(testResult))
+    aceTaskId = connector.aceCreateTaskFromResult(testResult)
+    return redirect('http://mercurygate.aceproject.com/?TASK_ID=%s' % aceTaskId)
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
