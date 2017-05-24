@@ -52,11 +52,12 @@ class TestrailAceConnector:
 
     def parseStepResults(self, stepResults):
         parsedResult = ""
-        for result in stepResults:
-            if result['status_id'] == 5:
-                parsedResult += "Failed: %s" % result['content'] + "\n\n"
-                parsedResult += "Expected: %s" % result['expected'] + "\n\n"
-                parsedResult += "Actual: %s" % result['actual'] + "\n\n"
+        if stepResults is not None:
+            for result in stepResults:
+                if result['status_id'] == 5:
+                    parsedResult += "Failed: %s" % result['content'] + "\n\n"
+                    parsedResult += "Expected: %s" % result['expected'] + "\n\n"
+                    parsedResult += "Actual: %s" % result['actual'] + "\n\n"
         return parsedResult
 
     def getFailedTests(self):
