@@ -3,6 +3,7 @@ import sys
 import json
 import requests
 import connectorconfig
+import urllib
 sys.path.append('/Users/richard.thomas/testrail-api/python/2.x')
 from flask import Flask, request, jsonify, redirect
 from testrail import *
@@ -22,7 +23,6 @@ class TestrailAceConnector:
     def acePublicSettings(self, settingName="CUSTOM_PRODUCT_NAME"):
         acePublicSettingsGet = requests.get(self.aceBaseUrl + "?fct=getpublicsettings&accountId=" + self.aceAccountId + "&format=JSON")
         acePublicSettingsJSON = json.loads(acePublicSettingsGet.text)['results'][0]
-        #print acePublicSettingsJSON[settingName]
         return acePublicSettingsJSON[settingName]
 
     def aceLogin(self, username, password):
@@ -30,36 +30,38 @@ class TestrailAceConnector:
         aceLoginGet = requests.get(aceLoginRequestStr)
         aceLoginJSON = json.loads(aceLoginGet.text)['results'][0]
         aceGuid = aceLoginJSON['GUID']
-        #print aceGuid
         return aceGuid
 
     def aceCreateTaskFromResult(self, result):
         summary = "DEFECT: %s" % result['custom_summary'][:100]
+        summary = urllib.quote(summary)
         details = "Reported By: %s \n\n" % self.testrailGetUserName(result['created_by'])
         details += "Comments: %s \n\n" % result['comment']
         details += self.parseStepResults(result['custom_step_results'])
+        details = urllib.quote(details)
         projectId = '21900'
         statusId = '81428'
-        isDetailsPlainText = 'True'
+        isDetailsPlainText = 'False'
         responseFormat = 'JSON'
         getTaskInReturn = 'True'
         guid = self.aceLogin(self.aceUsername, self.acePassword)
         createTaskStr = self.aceBaseUrl + "?fct=createtask&guid=" + guid + "&projectid=" + self.aceProjectId + "&summary=" + summary + "&details=" + details + "&statusid=" + statusId + "&isdetailsplaintext=" + isDetailsPlainText + "&gettaskinreturn=" + getTaskInReturn + "&format=" + responseFormat
-        response = requests.get(createTaskStr)
-        createTaskJSON = json.loads(response.text)['results'][0]
-        createTaskId = createTaskJSON['TASK_ID']
-        return createTaskId
+        return details
+        #response = requests.get(createTaskStr)
+        #createTaskJSON = json.loads(response.text)['results'][0]
+        #createTaskId = createTaskJSON['TASK_ID']
+        #return createTaskStr
 
     def parseStepResults(self, stepResults):
         parsedResult = ""
-        resultText = [None, "Passed", "Blocked", "Untested", "Retest", "Failed", "Skipped"]
+        resultText = ["", "Passed", "Blocked", "Untested", "Retest", "Failed", "Skipped"]
         if stepResults is not None:
             for result in stepResults:
                 result_status = result['status_id']
-                parsedResult += "Step Status: %s" % resultText[result_status] + "\n\n"
-                parsedResult += "Step: %s" % result['content'] + "\n\n"
-                parsedResult += "Expected: %s" % result['expected'] + "\n\n"
-                parsedResult += "Actual: %s" % result['actual'] + "\n\n\n"
+                parsedResult += "Step Status: %s" % resultText[result_status] + "\n"
+                parsedResult += "Step: %s" % result['content'] + "\n"
+                parsedResult += "Expected: %s" % result['expected'] + "\n"
+                parsedResult += "Actual: %s" % result['actual'] + "\n\n"
         return parsedResult
 
     def testrailGetResults(self, test_id):
@@ -73,13 +75,13 @@ class TestrailAceConnector:
 
 @app.route("/")
 def main():
-    #return request.args.get('test_id', '')
     test_id = request.args.get('test_id', '')
     connector = TestrailAceConnector()
     testResult = connector.testrailGetResults(test_id)
     stepResults = testResult['custom_step_results']
     aceTaskId = connector.aceCreateTaskFromResult(testResult)
-    return redirect('http://mercurygate.aceproject.com/?TASK_ID=%s' % aceTaskId)
+    return aceTaskId
+    #return redirect('http://mercurygate.aceproject.com/?TASK_ID=%s' % aceTaskId)
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
