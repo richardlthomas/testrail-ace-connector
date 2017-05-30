@@ -46,11 +46,10 @@ class TestrailAceConnector:
         getTaskInReturn = 'True'
         guid = self.aceLogin(self.aceUsername, self.acePassword)
         createTaskStr = self.aceBaseUrl + "?fct=createtask&guid=" + guid + "&projectid=" + self.aceProjectId + "&summary=" + summary + "&details=" + details + "&statusid=" + statusId + "&isdetailsplaintext=" + isDetailsPlainText + "&gettaskinreturn=" + getTaskInReturn + "&format=" + responseFormat
-        return details
-        #response = requests.get(createTaskStr)
-        #createTaskJSON = json.loads(response.text)['results'][0]
-        #createTaskId = createTaskJSON['TASK_ID']
-        #return createTaskStr
+        response = requests.get(createTaskStr)
+        createTaskJSON = json.loads(response.text)['results'][0]
+        createTaskId = createTaskJSON['TASK_ID']
+        return createTaskStr
 
     def parseStepResults(self, stepResults):
         parsedResult = ""
@@ -80,8 +79,7 @@ def main():
     testResult = connector.testrailGetResults(test_id)
     stepResults = testResult['custom_step_results']
     aceTaskId = connector.aceCreateTaskFromResult(testResult)
-    return aceTaskId
-    #return redirect('http://mercurygate.aceproject.com/?TASK_ID=%s' % aceTaskId)
+    return redirect('http://mercurygate.aceproject.com/?TASK_ID=%s' % aceTaskId)
 
 if __name__ =='__main__':
     port = int(os.environ.get("PORT", 5000))
