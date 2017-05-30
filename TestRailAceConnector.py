@@ -52,29 +52,15 @@ class TestrailAceConnector:
 
     def parseStepResults(self, stepResults):
         parsedResult = ""
+        resultText = [None, "Passed", "Blocked", "Untested", "Retest", "Failed", "Skipped"]
         if stepResults is not None:
             for result in stepResults:
-                if result['status_id'] == 5:
-                    parsedResult += "Failed: %s" % result['content'] + "\n\n"
-                    parsedResult += "Expected: %s" % result['expected'] + "\n\n"
-                    parsedResult += "Actual: %s" % result['actual'] + "\n\n"
+                result_status = result['status_id']
+                parsedResult += "Step Status: %s" % resultText[result_status] + "\n\n"
+                parsedResult += "Step: %s" % result['content'] + "\n\n"
+                parsedResult += "Expected: %s" % result['expected'] + "\n\n"
+                parsedResult += "Actual: %s" % result['actual'] + "\n\n\n"
         return parsedResult
-
-    def getFailedTests(self):
-        failures = self.testrailClient.send_get('get_tests/9&status_id=5')
-        #print failures
-        return failures
-
-    def getOpenTestRuns(self):
-        allRuns = self.testrailClient.send_get('get_runs/5')
-        openRuns = []
-        #print("Open test runs:")
-        for run in allRuns:
-            run = json.loads(json.dumps(run))
-            if run['is_completed'] == False:
-                openRuns.append(run)
-        #print openRuns
-        return openRuns
 
     def testrailGetResults(self, test_id):
         results = self.testrailClient.send_get('get_results/%s' % test_id)
