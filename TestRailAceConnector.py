@@ -45,11 +45,14 @@ class TestrailAceConnector:
         responseFormat = 'JSON'
         getTaskInReturn = 'True'
         guid = self.aceLogin(self.aceUsername, self.acePassword)
-        createTaskStr = self.aceBaseUrl + "?fct=createtask&guid=" + guid + "&projectid=" + self.aceProjectId + "&summary=" + summary + "&details=" + details + "&statusid=" + statusId + "&isdetailsplaintext=" + isDetailsPlainText + "&gettaskinreturn=" + getTaskInReturn + "&format=" + responseFormat
+        createTaskStr = self.aceBaseUrl + "?fct=createtask&guid=" + guid + "&projectid=" + self.aceProjectId + "&summary=" + summary + "&statusid=" + statusId + "&isdetailsplaintext=" + isDetailsPlainText + "&gettaskinreturn=" + getTaskInReturn + "&format=" + responseFormat
         response = requests.get(createTaskStr)
         createTaskJSON = json.loads(response.text)['results'][0]
         createTaskId = createTaskJSON['TASK_ID']
-        return createTaskStr
+        #details too long to fit in create request, using separate request to send test steps
+        saveTaskStr = self.aceBaseUrl + "?fct=savetask&guid=" + guid + "&taskid=" + createTaskId + "&details=" + details
+        saveTaskResponse = response.get(saveTaskStr)
+        return createTaskId
 
     def parseStepResults(self, stepResults):
         parsedResult = ""
@@ -58,9 +61,7 @@ class TestrailAceConnector:
             for result in stepResults:
                 result_status = result['status_id']
                 parsedResult += "Step Status: %s" % resultText[result_status] + "\n"
-                parsedResult += "Step: %s" % result['content'] + "\n"
-                parsedResult += "Expected: %s" % result['expected'] + "\n"
-                parsedResult += "Actual: %s" % result['actual'] + "\n\n"
+                parsedResult += "Step: %s" % result['content'] + "\n\n"
         return parsedResult
 
     def testrailGetResults(self, test_id):
